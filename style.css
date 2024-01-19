@@ -1,4 +1,4 @@
-// script.js
+
 let currentPlayer = 'X';
 let gameBoard = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
@@ -10,10 +10,10 @@ function handleCellClick(index) {
         updateBoard();
         checkWinner();
 
-        // Toggle the player for both modes
+
         togglePlayer();
 
-        // If in AI mode and the current player is 'O', make AI move
+      
         if (aiMode && currentPlayer === 'O' && gameActive) {
             const aiMove = getBestMove();
             gameBoard[aiMove] = currentPlayer;
