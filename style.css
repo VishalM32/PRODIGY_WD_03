@@ -1,69 +1,134 @@
-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f2f2f2;
+// script.js
+let currentPlayer = 'X';
+let gameBoard = ['', '', '', '', '', '', '', '', ''];
+let gameActive = true;
+let aiMode = true; 
+
+function handleCellClick(index) {
+    if (gameBoard[index] === '' && gameActive) {
+        gameBoard[index] = currentPlayer;
+        updateBoard();
+        checkWinner();
+
+        // Toggle the player for both modes
+        togglePlayer();
+
+        // If in AI mode and the current player is 'O', make AI move
+        if (aiMode && currentPlayer === 'O' && gameActive) {
+            const aiMove = getBestMove();
+            gameBoard[aiMove] = currentPlayer;
+            updateBoard();
+            checkWinner();
+            togglePlayer();
+        }
+    }
 }
 
-.game-container {
-    text-align: center;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+function updateBoard() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach((cell, index) => {
+        cell.textContent = gameBoard[index];
+    });
 }
 
-h1 {
-    color: #333;
-    font-size: 2em;
+function togglePlayer() {
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
 }
 
-#message {
-    margin-bottom: 10px;
-    font-weight: bold;
-    color: #333;
+function toggleGameMode() {
+    aiMode = !aiMode;
+    resetGame();
 }
 
-.board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    gap: 10px;
-    justify-content: center;
+function checkWinner() {
+    const winPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
+
+    for (const pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+            displayWinner(gameBoard[a]);
+            gameActive = false;
+            return;
+        }
+    }
+
+    if (!gameBoard.includes('')) {
+        displayDraw();
+        gameActive = false;
+    }
 }
 
-.cell {
-    width: 100px;
-    height: 100px;
-    background-color: #3498db;
-    border: 2px solid #2980b9;
-    font-size: 2em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #fff;
-    transition: background-color 0.3s;
+function displayWinner(winner) {
+    document.getElementById('message').textContent = `Player ${winner} wins!`;
 }
 
-.cell:hover {
-    background-color: #2980b9;
+function displayDraw() {
+    document.getElementById('message').textContent = "It's a draw!";
 }
 
-button {
-    font-size: 1em;
-    padding: 10px;
-    cursor: pointer;
-    background-color: #2ecc71;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    margin-top: 10px;
-    transition: background-color 0.3s;
+function resetGame() {
+    currentPlayer = 'X';
+    gameBoard = ['', '', '', '', '', '', '', '', ''];
+    gameActive = true;
+    document.getElementById('message').textContent = '';
+    updateBoard();
 }
 
-button:hover {
-    background-color: #27ae60;
+function getBestMove() {
+    let bestScore = Infinity;
+    let bestMove;
+
+    for (let i = 0; i < gameBoard.length; i++) {
+        if (gameBoard[i] === '') {
+            gameBoard[i] = currentPlayer;
+            let score = minimax(gameBoard, 0, false);
+            gameBoard[i] = ''; // Undo the move
+
+            if (score < bestScore) {
+                bestScore = score;
+                bestMove = i;
+            }
+        }
+    }
+
+    return bestMove;
+}
+
+function minimax(board, depth, isMaximizing) {
+    let result = checkWinner();
+    if (result !== null) {
+        return result === 'O' ? 1 : -1;
+    }
+
+    if (!board.includes('')) {
+        return 0; // It's a draw
+    }
+
+    if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === '') {
+                board[i] = 'O';
+                let score = minimax(board, depth + 1, false);
+                board[i] = ''; 
+                bestScore = Math.max(score, bestScore);
+            }
+        }
+        return bestScore;
+    } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === '') {
+                board[i] = 'X';
+                let score = minimax(board, depth + 1, true);
+                board[i] = '';  
+                bestScore = Math.min(score, bestScore);
+            }
+        }
+        return bestScore;
+    }
 }
